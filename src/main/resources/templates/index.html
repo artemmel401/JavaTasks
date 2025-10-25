@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User List</title>
+</head>
+<body>
+<h1>User List</h1>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>email</th>
+        <th>first_name</th>
+        <th>last_name</th>
+        <th>isActive</th>
+        <th>registration_date</th>
+    </tr>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.id}"></td>
+        <td th:text="${user.email}"></td>
+        <td th:text="${user.firstName}"></td>
+        <td th:text="${user.lastName}"></td>
+        <td th:text="${user.isActive}"></td>
+        <td th:text="${user.registrationDate}"></td>
+    </tr>
+</table>
+</body>
+</html>
