@@ -10,6 +10,7 @@ import ru.artem.NauJava.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -27,7 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/findByEmail")
-    public List<User> findByEmail(@RequestParam String email) {
+    public Optional<User> findByEmail(@RequestParam String email) {
         return userRepositoryCustom.findByEmail(email);
     }
     @GetMapping("/findByDate")

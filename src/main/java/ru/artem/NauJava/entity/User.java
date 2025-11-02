@@ -1,8 +1,11 @@
 package ru.artem.NauJava.entity;
 
 import jakarta.persistence.*;
+import ru.artem.NauJava.model.Role;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -25,6 +28,13 @@ public class User {
 
     @Column
     private LocalDateTime registration_date;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Role role;
+
+    @Column
+    private String password;
 
     public Long getId() {
         return id;
@@ -72,5 +82,25 @@ public class User {
 
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public Set<Role> getRoles() {
+        return role != null ? Collections.singleton(role) : Collections.emptySet();
     }
 }

@@ -11,6 +11,7 @@ import ru.artem.NauJava.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserRepositoryImpl implements UserRepositoryCustom
@@ -22,14 +23,15 @@ public class UserRepositoryImpl implements UserRepositoryCustom
         this.entityManager = entityManager;
     }
     @Override
-    public List<User> findByEmail(String email)
+    public Optional<User> findByEmail(String email)
     {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
         Root<User> userRoot = criteriaQuery.from(User.class);
         Predicate namePredicate = criteriaBuilder.equal(userRoot.get("email"), email);
         criteriaQuery.select(userRoot).where(namePredicate);
-        return entityManager.createQuery(criteriaQuery).getResultList();
+        List<User> users = entityManager.createQuery(criteriaQuery).getResultList();
+        return users.stream().findFirst();
     }
     @Override
     public List<User> findByRegistrationDate(LocalDateTime registrationDate)

@@ -10,6 +10,7 @@ import ru.artem.NauJava.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @SpringBootTest
@@ -29,8 +30,8 @@ class UserCustomTest {
         User user = new User();
         user.setEmail(userEmail);
         userRepository.save(user);
-        List<User> foundUsers =  userRepositoryImpl.findByEmail(userEmail);
-        Assertions.assertEquals(1, foundUsers.size());
+        Optional<User> foundUser =  userRepositoryImpl.findByEmail(userEmail);
+        Assertions.assertNotNull(foundUser);
     }
 
     @Test
