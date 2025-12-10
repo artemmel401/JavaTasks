@@ -22,6 +22,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom
     {
         this.entityManager = entityManager;
     }
+
     @Override
     public Optional<User> findByEmail(String email)
     {
@@ -33,6 +34,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom
         List<User> users = entityManager.createQuery(criteriaQuery).getResultList();
         return users.stream().findFirst();
     }
+
     @Override
     public List<User> findByRegistrationDate(LocalDateTime registrationDate)
     {

@@ -1,12 +1,14 @@
 package ru.artem.NauJava.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
-import ru.artem.NauJava.service.ReportService;
+import ru.artem.NauJava.services.report.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/report")
+@RequestMapping("/api/report")
+@Tag(name = "report-entity-controller")
 public class ReportController {
 
     @Autowired

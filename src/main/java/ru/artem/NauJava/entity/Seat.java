@@ -1,7 +1,11 @@
 package ru.artem.NauJava.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "seats")
 public class Seat {
@@ -11,54 +15,15 @@ public class Seat {
 
     @ManyToOne
     @JoinColumn(name = "hall_id")
-    private Hall hall_id;
+    private Hall hall;
 
-    @Column
-    private Integer row_number;
+    @Column(name = "row_number")
+    private Integer rowNumber;
 
-    @Column
-    private Integer seat_number;
+    @Column(name = "seat_number")
+    private Integer seatNumber;
 
-    @Column
-    private boolean is_free;
+    @Column(name = "is_free")
+    private boolean isFree;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Hall getHallId() {
-        return hall_id;
-    }
-
-    public void setHallId(Hall hall_id) {
-        this.hall_id = hall_id;
-    }
-
-    public Integer getRowNumber() {
-        return row_number;
-    }
-
-    public void setRowNumber(Integer row_number) {
-        this.row_number = row_number;
-    }
-
-    public Integer getSeatNumber() {
-        return seat_number;
-    }
-
-    public void setSeatNumber(Integer seat_number) {
-        this.seat_number = seat_number;
-    }
-
-    public boolean isIsFree() {
-        return is_free;
-    }
-
-    public void setIsFree(boolean is_free) {
-        this.is_free = is_free;
-    }
 }

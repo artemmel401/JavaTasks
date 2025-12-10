@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .admin-container {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #343a40;
+            color: white;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, .8);
+            padding: 12px 20px;
+            margin: 2px 0;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, .1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
+        .tab-content {
+            padding: 25px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+        }
+
+        .table-actions {
+            white-space: nowrap;
+        }
+
+        .badge-active {
+            background-color: #198754;
+        }
+
+        .badge-inactive {
+            background-color: #6c757d;
+        }
+
+        .badge-payed {
+            background-color: #198754;
+        }
+
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-failed {
+            background-color: #dc3545;
+        }
+
+        .entity-count {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .status-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+        }
+
+        .poster-thumbnail {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Стили для модалки редактирования */
+        #editSessionModal .modal-header {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        #editSessionModal .modal-content {
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(255, 193, 7, 0.3);
+        }
+
+        #editSessionModal input:focus,
+        #editSessionModal select:focus {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+        }
+
+        #editSessionModal .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        #editSessionModal #editSessionBtn {
+            min-width: 150px;
+        }
+
+        /* Анимация появления */
+        #editSessionModal .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Стили для алёрта */
+        #editSessionAlert {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid admin-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="d-flex flex-column align-items-center mb-4">
+                    <h4 class="text-center mb-3">Админ-панель</h4>
+                </div>
+
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin/users">
+                        <i class="bi bi-people"></i> Пользователи
+                    </a>
+                    <a class="nav-link" href="/admin/movies">
+                        <i class="bi bi-film"></i> Фильмы
+                    </a>
+                    <a class="nav-link active" href="/admin/sessions">
+                        <i class="bi bi-clock"></i> Сеансы
+                    </a>
+                    <a class="nav-link" href="/admin/cinemas">
+                        <i class="bi bi-building"></i> Кинотеатры
+                    </a>
+                    <a class="nav-link" href="/admin/halls">
+                        <i class="bi bi-building"></i> Залы
+                    </a>
+                    <a class="nav-link" href="/admin/bookings">
+                        <i class="bi bi-ticket"></i> Бронирования
+                    </a>
+                    <a class="nav-link" href="/cabinet">
+                        В личный кабинет
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto pt-3 px-4">
+                <div class="tab-content">
+                    <div id="sessionsTab">
+                        <h3 class="mb-4">
+                            <i class="bi bi-clock text-primary me-2"></i>Управление сеансами
+                        </h3>
+
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal"
+                            data-bs-target="#createSessionModal">
+                            <i class="bi bi-plus-circle"></i> Добавить сеанс
+                        </button>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Фильм</th>
+                                        <th>Дата и время</th>
+                                        <th>Зал</th>
+                                        <th>Цена</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="movieSession : ${movieSessions}">
+                                        <td th:text="${movieSession.id}"></td>
+                                        <td th:text="${movieSession.movie?.title}"></td>
+                                        <td th:text="${#temporals.format(movieSession.startTime, 'dd.MM.yyyy HH:mm')}">
+                                        </td>
+                                        <td th:text="${movieSession.hall.name}"></td>
+                                        <td th:text="${movieSession.price} + ' ₽'"></td>
+                                        <td class="table-actions">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                th:onclick="'editSession(' + ${movieSession.id} + ')'">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger ms-1"
+                                                th:onclick="'deleteSession(' + ${movieSession.id} + ')'">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal для создания сеанса -->
+    <div class="modal fade" id="createSessionModal" tabindex="-1" aria-labelledby="createSessionModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <!-- Заголовок -->
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="createSessionModalLabel">
+                        <i class="bi bi-plus-circle"></i> Создание нового сеанса
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <!-- Форма -->
+                <form id="createSessionForm">
+                    <div class="modal-body">
+                        <!-- Сообщения об ошибках/успехе -->
+                        <div id="sessionErrorAlert" class="alert alert-danger alert-dismissible fade show d-none"
+                            role="alert">
+                            <span id="sessionErrorMessage"></span>
+                            <button type="button" class="btn-close" onclick="hideErrorAlert()"></button>
+                        </div>
+
+                        <div id="sessionSuccessAlert" class="alert alert-success alert-dismissible fade show d-none"
+                            role="alert">
+                            <span id="sessionSuccessMessage"></span>
+                            <button type="button" class="btn-close" onclick="hideSuccessAlert()"></button>
+                        </div>
+
+                        <!-- Поля формы -->
+                        <div class="row g-3">
+                            <!-- Фильм -->
+                            <div class="col-md-6">
+                                <label for="modal_movie_id" class="form-label">Фильм *</label>
+                                <select class="form-select" id="modal_movie_id" name="movie_id" required>
+                                    <option value="">Выберите фильм...</option>
+                                </select>
+                                <div class="form-text" id="movieInfo"></div>
+                            </div>
+
+                            <!-- Зал -->
+                            <div class="col-md-6">
+                                <label for="modal_hall_id" class="form-label">Зал *</label>
+                                <select class="form-select" id="modal_hall_id" name="hall_id" required>
+                                    <option value="">Выберите зал...</option>
+                                </select>
+                                <div class="form-text" id="hallInfo"></div>
+                            </div>
+
+                            <!-- Дата и время начала -->
+                            <div class="col-md-6">
+                                <label for="modal_start_date" class="form-label">Дата начала *</label>
+                                <input type="date" class="form-control" id="modal_start_date" required
+                                    min="<?= date('Y-m-d') ?>">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="modal_start_time" class="form-label">Время начала *</label>
+                                <input type="time" class="form-control" id="modal_start_time" required min="09:00"
+                                    max="23:00" step="900">
+                                <div class="form-text">Шаг 15 минут</div>
+                            </div>
+
+                            <!-- Дата и время окончания -->
+                            <div class="col-md-6">
+                                <label for="modal_end_date" class="form-label">Дата окончания *</label>
+                                <input type="date" class="form-control" id="modal_end_date" required
+                                    min="<?= date('Y-m-d') ?>">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="modal_end_time" class="form-label">Время окончания *</label>
+                                <input type="time" class="form-control" id="modal_end_time" required min="09:00"
+                                    max="23:00" step="900">
+                            </div>
+
+                            <!-- Цена -->
+                            <div class="col-12">
+                                <label for="modal_price" class="form-label">Цена билета (руб.) *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="modal_price" name="price" min="100"
+                                        max="5000" step="50" value="500" required>
+                                    <span class="input-group-text">₽</span>
+                                </div>
+                                <div class="form-text">От 100 до 5000 рублей</div>
+                            </div>
+
+                            <!-- Информация о сеансе -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="bi bi-info-circle"></i> Информация о сеансе
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Длительность фильма:</small>
+                                                <p id="infoMovieDuration">-</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Длительность сеанса:</small>
+                                                <p id="infoSessionDuration">-</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Время уборки:</small>
+                                                <p>30 мин</p>
+                                            </div>
+                                        </div>
+                                        <div id="durationWarning" class="alert alert-warning mt-2 d-none">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            Внимание! Длительность сеанса меньше длительности фильма
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Футер модалки -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-check-circle"></i> Создать сеанс
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно редактирования сеанса -->
+    <!-- ВСТАВЬТЕ ЭТОТ КОД в конец вашего файла шаблона (Thymeleaf), например перед </body> -->
+    <div class="modal fade" id="editSessionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> Редактировать сеанс
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editSessionForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editSessionId">
+
+                        <div id="editSessionAlert" class="alert d-none"></div>
+
+                        <div class="row g-3">
+                            <!-- Фильм -->
+                            <div class="col-md-6">
+                                <label class="form-label">Фильм *</label>
+                                <select class="form-select" id="editMovieId" required>
+                                    <option value="">Загрузка...</option>
+                                </select>
+                            </div>
+
+                            <!-- Зал -->
+                            <div class="col-md-6">
+                                <label class="form-label">Зал *</label>
+                                <select class="form-select" id="editHallId" required>
+                                    <option value="">Загрузка...</option>
+                                </select>
+                            </div>
+
+                            <!-- Дата и время начала -->
+                            <div class="col-md-6">
+                                <label class="form-label">Дата начала *</label>
+                                <input type="date" class="form-control" id="editStartDate" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Время начала *</label>
+                                <input type="time" class="form-control" id="editStartTime" step="900" required>
+                            </div>
+
+                            <!-- Дата и время окончания -->
+                            <div class="col-md-6">
+                                <label class="form-label">Дата окончания *</label>
+                                <input type="date" class="form-control" id="editEndDate" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Время окончания *</label>
+                                <input type="time" class="form-control" id="editEndTime" step="900" required>
+                            </div>
+
+                            <!-- Цена -->
+                            <div class="col-12">
+                                <label class="form-label">Цена билета (руб.) *</label>
+                                <input type="number" class="form-control" id="editPrice" min="100" max="5000" step="50" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-lg"></i> Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        // Объект для хранения данных
+        let moviesData = [];
+        let hallsData = [];
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Загрузка данных при открытии модалки
+            const modal = document.getElementById('createSessionModal');
+            if (modal) {
+                modal.addEventListener('show.bs.modal', function () {
+                    initializeModal();
+                });
+
+                modal.addEventListener('hidden.bs.modal', function () {
+                    resetModal();
+                });
+            }
+
+            // Обработчики событий
+            setupEventListeners();
+        });
+
+        // Инициализация модалки
+        async function initializeModal() {
+            try {
+                // Показать индикатор загрузки
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+
+                // Загрузить фильмы и залы
+                await Promise.all([loadNewMovies(), loadNewHalls()]);
+
+                // Установить даты по умолчанию
+                setDefaultDates();
+
+                // Обновить информацию
+                updateSessionInfo();
+
+                // Включить кнопку
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> Создать сеанс';
+
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showError('Ошибка загрузки данных: ' + error.message);
+            }
+        }
+
+        // Загрузка фильмов
+        async function loadNewMovies() {
+            try {
+                const response = await fetch('/api/movie');
+                if (!response.ok) throw new Error('Ошибка загрузки фильмов');
+
+                moviesData = await response.json();
+                const select = document.getElementById('modal_movie_id');
+                console.log(select)
+                // Очистить и заполнить select
+                select.innerHTML = '<option value="">Выберите фильм...</option>';
+                moviesData.forEach(movie => {
+                    const option = document.createElement('option');
+                    option.value = movie.id;
+                    option.textContent = `${movie.title} (${movie.durationMinutes} мин)`;
+                    option.dataset.duration = movie.durationMinutes;
+                    select.appendChild(option);
+                });
+                console.log(select)
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Загрузка залов
+        async function loadNewHalls() {
+            try {
+                const response = await fetch('/api/hall');
+                if (!response.ok) throw new Error('Ошибка загрузки залов');
+
+                hallsData = await response.json();
+                const select = document.getElementById('modal_hall_id');
+
+                // Очистить и заполнить select
+                select.innerHTML = '<option value="">Выберите зал...</option>';
+                hallsData.forEach(hall => {
+                    const option = document.createElement('option');
+                    option.value = hall.id;
+                    option.textContent = `${hall.name}`;
+                    option.dataset.capacity = hall.capacity;
+                    option.dataset.cinema = hall.cinemaName || 'Неизвестно';
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Установить даты по умолчанию
+        function setDefaultDates() {
+            const now = new Date();
+
+            // Сегодняшняя дата
+            const today = now.toISOString().split('T')[0];
+            document.getElementById('modal_start_date').value = today;
+            document.getElementById('modal_end_date').value = today;
+
+            // Время - следующий час, округленный до 15 минут
+            const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+            const minutes = Math.ceil(nextHour.getMinutes() / 15) * 15;
+            nextHour.setMinutes(minutes);
+
+            const startTime = nextHour.toTimeString().substring(0, 5);
+            document.getElementById('modal_start_time').value = startTime;
+
+            // Конечное время - +2 часа
+            nextHour.setHours(nextHour.getHours() + 2);
+            const endTime = nextHour.toTimeString().substring(0, 5);
+            document.getElementById('modal_end_time').value = endTime;
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Обработчик отправки формы
+            document.getElementById('createSessionForm').addEventListener('submit', createSession);
+
+            // Обработчики изменения полей
+            const fields = ['modal_movie_id', 'modal_hall_id', 'modal_start_date',
+                'modal_start_time', 'modal_end_date', 'modal_end_time'];
+
+            fields.forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('change', updateSessionInfo);
+            });
+
+            // Обработчик времени начала для автозаполнения времени окончания
+            document.getElementById('modal_start_time').addEventListener('change', function () {
+                const startTime = this.value;
+                if (startTime) {
+                    const [hours, minutes] = startTime.split(':');
+                    let endHours = parseInt(hours) + 2;
+                    if (endHours >= 24) endHours = 23;
+                    const endTime = `${endHours.toString().padStart(2, '0')}:${minutes}`;
+                    document.getElementById('modal_end_time').value = endTime;
+                    updateSessionInfo();
+                }
+            });
+
+            // Обработчик даты начала
+            document.getElementById('modal_start_date').addEventListener('change', function () {
+                document.getElementById('modal_end_date').value = this.value;
+                updateSessionInfo();
+            });
+        }
+
+        // Обновить информацию о сеансе
+        function updateSessionInfo() {
+            const movieSelect = document.getElementById('modal_movie_id');
+            const movieOption = movieSelect.options[movieSelect.selectedIndex];
+            const hallSelect = document.getElementById('modal_hall_id');
+            const hallOption = hallSelect.options[hallSelect.selectedIndex];
+
+            // Обновить информацию о фильме
+            if (movieOption.value) {
+                const duration = movieOption.dataset.duration;
+                document.getElementById('movieInfo').textContent = `Длительность: ${duration} минут`;
+                document.getElementById('infoMovieDuration').textContent = `${duration} минут`;
+            } else {
+                document.getElementById('movieInfo').textContent = '';
+                document.getElementById('infoMovieDuration').textContent = '-';
+            }
+
+            // Обновить информацию о зале
+            if (hallOption.value) {
+                const capacity = hallOption.dataset.capacity;
+                const cinema = hallOption.dataset.cinema;
+            } else {
+                document.getElementById('hallInfo').textContent = '';
+            }
+
+            // Рассчитать длительность сеанса
+            const startDate = document.getElementById('modal_start_date').value;
+            const startTime = document.getElementById('modal_start_time').value;
+            const endDate = document.getElementById('modal_end_date').value;
+            const endTime = document.getElementById('modal_end_time').value;
+
+            if (startDate && startTime && endDate && endTime) {
+                const start = new Date(`${startDate}T${startTime}`);
+                const end = new Date(`${endDate}T${endTime}`);
+
+                if (start < end) {
+                    const diffMs = end - start;
+                    const diffMinutes = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMinutes / 60);
+                    const remainingMinutes = diffMinutes % 60;
+
+                    document.getElementById('infoSessionDuration').textContent =
+                        `${diffMinutes} мин (${diffHours}ч ${remainingMinutes}мин)`;
+
+                    // Проверить соответствие длительности фильму
+                    if (movieOption.value) {
+                        const movieDuration = parseInt(movieOption.dataset.duration);
+                        const warningDiv = document.getElementById('durationWarning');
+
+                        if (diffMinutes < movieDuration) {
+                            warningDiv.classList.remove('d-none');
+                        } else {
+                            warningDiv.classList.add('d-none');
+                        }
+                    }
+                } else {
+                    document.getElementById('infoSessionDuration').textContent = 'Некорректное время';
+                }
+            }
+        }
+
+        // Создание сеанса
+        async function createSession(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Валидация формы
+            if (!validateForm()) {
+                return;
+            }
+
+            // Показать индикатор загрузки
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...';
+
+            // Собрать данные
+            const sessionData = {
+                start_time: `${document.getElementById('modal_start_date').value}T${document.getElementById('modal_start_time').value}:00`,
+                end_time: `${document.getElementById('modal_end_date').value}T${document.getElementById('modal_end_time').value}:00`,
+                price: parseInt(document.getElementById('modal_price').value),
+                hall_id: parseInt(document.getElementById('modal_hall_id').value),
+                movie_id: parseInt(document.getElementById('modal_movie_id').value)
+            };
+
+            try {
+                const response = await fetch('/api/admin/session', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(sessionData)
+                });
+
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    // Успех
+                    showSuccess('Сеанс успешно создан!');
+
+                    // Обновить таблицу сеансов через 1.5 секунды
+                    setTimeout(() => {
+                        // Закрыть модалку
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createSessionModal'));
+                        modal.hide();
+
+                        // Обновить страницу или таблицу
+                        refreshSessionsTable();
+
+                        // Сбросить форму
+                        resetModal();
+                    }, 1500);
+
+                } else {
+                    // Ошибка от сервера
+                    const errorMsg = responseData.message ||
+                        responseData.error ||
+                        `Ошибка ${response.status}: ${response.statusText}`;
+                    showError(errorMsg);
+                }
+
+            } catch (error) {
+                // Ошибка сети
+                showError('Ошибка сети: ' + error.message);
+            } finally {
+                // Восстановить кнопку
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Создать сеанс';
+            }
+        }
+
+        // Валидация формы
+        function validateForm() {
+            hideAlerts();
+
+            const movieId = document.getElementById('modal_movie_id').value;
+            const hallId = document.getElementById('modal_hall_id').value;
+            const startDate = document.getElementById('modal_start_date').value;
+            const startTime = document.getElementById('modal_start_time').value;
+            const endDate = document.getElementById('modal_end_date').value;
+            const endTime = document.getElementById('modal_end_time').value;
+            const price = document.getElementById('modal_price').value;
+
+            // Проверка обязательных полей
+            if (!movieId || !hallId || !startDate || !startTime || !endDate || !endTime || !price) {
+                showError('Заполните все обязательные поля');
+                return false;
+            }
+
+            // Проверка дат
+            const start = new Date(`${startDate}T${startTime}`);
+            const end = new Date(`${endDate}T${endTime}`);
+            const now = new Date();
+
+            if (start < now) {
+                showError('Время начала должно быть в будущем');
+                return false;
+            }
+
+            if (end <= start) {
+                showError('Время окончания должно быть позже времени начала');
+                return false;
+            }
+
+            // Проверка цены
+            if (price < 100 || price > 5000) {
+                showError('Цена должна быть от 100 до 5000 рублей');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            const alertDiv = document.getElementById('sessionErrorAlert');
+            const messageSpan = document.getElementById('sessionErrorMessage');
+
+            messageSpan.textContent = message;
+            alertDiv.classList.remove('d-none');
+
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                alertDiv.classList.add('d-none');
+            }, 5000);
+        }
+
+        // Показать успех
+        function showSuccess(message) {
+            const alertDiv = document.getElementById('sessionSuccessAlert');
+            const messageSpan = document.getElementById('sessionSuccessMessage');
+
+            messageSpan.textContent = message;
+            alertDiv.classList.remove('d-none');
+
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                alertDiv.classList.add('d-none');
+            }, 5000);
+        }
+
+        // Скрыть алерты
+        function hideAlerts() {
+            document.getElementById('sessionErrorAlert').classList.add('d-none');
+            document.getElementById('sessionSuccessAlert').classList.add('d-none');
+        }
+
+        // Скрыть алерт ошибки
+        function hideErrorAlert() {
+            document.getElementById('sessionErrorAlert').classList.add('d-none');
+        }
+
+        // Скрыть алерт успеха
+        function hideSuccessAlert() {
+            document.getElementById('sessionSuccessAlert').classList.add('d-none');
+        }
+
+        // Сбросить модалку
+        function resetModal() {
+            document.getElementById('createSessionForm').reset();
+            hideAlerts();
+            document.getElementById('durationWarning').classList.add('d-none');
+            document.getElementById('movieInfo').textContent = '';
+            document.getElementById('hallInfo').textContent = '';
+            document.getElementById('infoMovieDuration').textContent = '-';
+            document.getElementById('infoSessionDuration').textContent = '-';
+        }
+
+        function refreshSessionsTable() {
+
+            console.log('Сеанс создан, обновляем таблицу...');
+            location.reload()
+        }
+// Глобальная переменная для хранения текущего ID сеанса
+let currentEditingSessionId = null;
+
+// Основная функция редактирования
+function editSession(sessionId) {
+    console.log('Начинаем редактирование сеанса ID:', sessionId);
+    currentEditingSessionId = sessionId;
+
+    // 1. Сначала открываем модалку
+    const modalElement = document.getElementById('editSessionModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+
+    // 2. Показываем сообщение о загрузке
+    showAlert('Загрузка данных...', 'info');
+
+    // 3. Загружаем данные асинхронно
+    loadSessionDataAndFillForm(sessionId);
+}
+
+// Загрузить данные и заполнить форму
+async function loadSessionDataAndFillForm(sessionId) {
+    try {
+        console.log('Запрашиваем данные сеанса ID:', sessionId);
+
+        // Загружаем данные сеанса
+        const response = await fetch(`/api/session/${sessionId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const sessionData = await response.json();
+        console.log('Получены данные:', sessionData);
+
+        // Заполняем форму
+        fillFormWithData(sessionData);
+
+        // Загружаем списки фильмов и залов
+        await Promise.all([
+            loadMovies(sessionData.movieId?.id),
+            loadHalls(sessionData.hallId?.id)
+        ]);
+
+        // Скрываем алерт
+        hideAlert();
+
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        showAlert(`Ошибка загрузки данных: ${error.message}`, 'danger');
+    }
+}
+
+// Заполнить форму данными
+function fillFormWithData(data) {
+    console.log('Заполняем форму данными:', data);
+
+    // ID
+    document.getElementById('editSessionId').value = data.id || '';
+
+    // Время начала
+    if (data.startTime) {
+        const startDate = new Date(data.startTime);
+        document.getElementById('editStartDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('editStartTime').value =
+            startDate.getHours().toString().padStart(2, '0') + ':' +
+            startDate.getMinutes().toString().padStart(2, '0');
+    }
+
+    // Время окончания
+    if (data.endTime) {
+        const endDate = new Date(data.endTime);
+        document.getElementById('editEndDate').value = endDate.toISOString().split('T')[0];
+        document.getElementById('editEndTime').value =
+            endDate.getHours().toString().padStart(2, '0') + ':' +
+            endDate.getMinutes().toString().padStart(2, '0');
+    }
+
+    // Цена
+    document.getElementById('editPrice').value = data.price || '';
+
+    // Установить минимальную дату
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('editStartDate').min = today;
+    document.getElementById('editEndDate').min = today;
+}
+
+// Загрузить фильмы
+async function loadMovies(selectedMovieId) {
+    try {
+        const movieSelect = document.getElementById('editMovieId');
+        movieSelect.innerHTML = '<option value="">Загрузка...</option>';
+
+        const response = await fetch('/api/movie');
+        const movies = await response.json();
+
+        movieSelect.innerHTML = '<option value="">Выберите фильм</option>';
+        movies.forEach(movie => {
+            const option = document.createElement('option');
+            option.value = movie.id;
+            option.textContent = `${movie.title} (${movie.durationMinutes} мин)`;
+            if (movie.id == selectedMovieId) {
+                option.selected = true;
+            }
+            movieSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Ошибка загрузки фильмов:', error);
+        document.getElementById('editMovieId').innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
+}
+
+// Загрузить залы
+async function loadHalls(selectedHallId) {
+    try {
+        const hallSelect = document.getElementById('editHallId');
+        hallSelect.innerHTML = '<option value="">Загрузка...</option>';
+
+        const response = await fetch('/api/hall');
+        const halls = await response.json();
+
+        hallSelect.innerHTML = '<option value="">Выберите зал</option>';
+        halls.forEach(hall => {
+            const option = document.createElement('option');
+            option.value = hall.id;
+            option.textContent = `${hall.name}`;
+            if (hall.id == selectedHallId) {
+                option.selected = true;
+            }
+            hallSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Ошибка загрузки залов:', error);
+        document.getElementById('editHallId').innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
+}
+
+// Показать алерт
+function showAlert(message, type = 'info') {
+    const alertDiv = document.getElementById('editSessionAlert');
+    if (!alertDiv) {
+        console.warn('Алерт не найден, создаем временный');
+        return;
+    }
+
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="hideAlert()"></button>
+    `;
+    alertDiv.classList.remove('d-none');
+}
+
+// Скрыть алерт
+function hideAlert() {
+    const alertDiv = document.getElementById('editSessionAlert');
+    if (alertDiv) {
+        alertDiv.classList.add('d-none');
+    }
+}
+
+// Обработчик отправки формы
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editSessionForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSessionChanges();
+        });
+    }
+
+    // Обработчик закрытия модалки
+    const modal = document.getElementById('editSessionModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            resetForm();
+        });
+    }
+});
+
+// Сохранить изменения
+async function saveSessionChanges() {
+    const sessionId = document.getElementById('editSessionId').value;
+    if (!sessionId) {
+        showAlert('Ошибка: ID сеанса не найден', 'danger');
+        return;
+    }
+
+    // Проверка заполнения обязательных полей
+    const requiredFields = ['editMovieId', 'editHallId', 'editStartDate', 'editStartTime', 'editEndDate', 'editEndTime', 'editPrice'];
+    for (const fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (!field.value.trim()) {
+            showAlert(`Заполните поле: ${field.previousElementSibling?.textContent || fieldId}`, 'danger');
+            field.focus();
+            return;
+        }
+    }
+
+    // Собрать данные
+    const sessionData = {
+        id: parseInt(sessionId),
+        startTime: `${document.getElementById('editStartDate').value}T${document.getElementById('editStartTime').value}:00`,
+        endTime: `${document.getElementById('editEndDate').value}T${document.getElementById('editEndTime').value}:00`,
+        price: parseInt(document.getElementById('editPrice').value),
+        hallId: parseInt(document.getElementById('editHallId').value),
+        movieId: parseInt(document.getElementById('editMovieId').value)
+    };
+
+    console.log('Отправляем данные:', sessionData);
+
+    // Показать индикатор загрузки
+    const submitBtn = document.querySelector('#editSessionForm button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Сохранение...';
+
+    try {
+        // Отправить запрос
+        const response = await fetch(`/api/admin/session/${sessionId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(sessionData)
+        });
+
+        if (response.ok) {
+            showAlert('Сеанс успешно обновлен!', 'success');
+
+            // Обновить страницу через 2 секунды
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+
+        } else {
+            const errorText = await response.text();
+            showAlert(`Ошибка: ${errorText || 'Неизвестная ошибка'}`, 'danger');
+        }
+
+    } catch (error) {
+        showAlert(`Ошибка сети: ${error.message}`, 'danger');
+
+    } finally {
+        // Восстановить кнопку
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Сбросить форму
+function resetForm() {
+    const form = document.getElementById('editSessionForm');
+    if (form) {
+        form.reset();
+    }
+    hideAlert();
+    currentEditingSessionId = null;
+}
+
+// Проверка существования элементов (для отладки)
+function debugCheckElements() {
+    const elements = [
+        'editSessionModal',
+        'editSessionForm',
+        'editSessionId',
+        'editMovieId',
+        'editHallId',
+        'editStartDate',
+        'editStartTime',
+        'editEndDate',
+        'editEndTime',
+        'editPrice',
+        'editSessionAlert'
+    ];
+
+    console.log('Проверка элементов DOM:');
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`  ${id}:`, element ? '✓ найден' : '✗ не найден');
+    });
+}
+
+// Для отладки - вызовите эту функцию в консоли
+window.debugEditModal = debugCheckElements;
+
+        function deleteSession(sessionId) {
+            if (confirm('Вы уверены, что хотите удалить сеанс?')) {
+                fetch(`/api/admin/session/${sessionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload()
+                        } else {
+                            throw new Error('Ошибка при сохранении изменений');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Произошла ошибка при сохранении изменений');
+                    });
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Ваша реализация показа уведомлений
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    </script>
+</body>
+
+</html>

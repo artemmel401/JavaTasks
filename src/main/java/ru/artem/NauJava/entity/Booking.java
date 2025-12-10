@@ -1,78 +1,47 @@
 package ru.artem.NauJava.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import ru.artem.NauJava.model.PaymentStatus;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
 public class Booking {
+    @Setter
+    @Getter
     @Id
     @GeneratedValue
     private Long id;
 
+    @Setter
+    @Getter
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user_id;
+    private User user;
 
+    @Setter
+    @Getter
     @ManyToOne
     @JoinColumn(name = "session_id")
-    private Session session_id;
+    private Session session;
 
-    @Column
-    private LocalDateTime booking_time;
+    @Setter
+    @Getter
+    @Column(name = "booking_time")
+    private LocalDateTime bookingTime;
 
-    @Column
-    private Integer total_amount;
+    @Setter
+    @Getter
+    @Column(name = "total_amount")
+    private Integer totalAmount;
 
-    @Column
-    private String payment_status;
+    @Setter
+    @Getter
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
+    private PaymentStatus paymentStatus;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUserId() {
-        return user_id;
-    }
-
-    public void setUserId(User user_id) {
-        this.user_id = user_id;
-    }
-
-    public Session getSessionId() {
-        return session_id;
-    }
-
-    public void setSessionId(Session session_id) {
-        this.session_id = session_id;
-    }
-
-    public LocalDateTime getBookingTime() {
-        return booking_time;
-    }
-
-    public void setBookingTime(LocalDateTime booking_time) {
-        this.booking_time = booking_time;
-    }
-
-    public Integer getTotalAmount() {
-        return total_amount;
-    }
-
-    public void setTotalAmount(Integer total_amount) {
-        this.total_amount = total_amount;
-    }
-
-    public String getPaymentStatus() {
-        return payment_status;
-    }
-
-    public void setPaymentStatus(String payment_status) {
-        this.payment_status = payment_status;
-    }
 }

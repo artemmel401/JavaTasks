@@ -10,7 +10,6 @@ import ru.artem.NauJava.entity.User;
 @RepositoryRestResource(path = "users")
 public interface UserRepositoryCustom
 {
-
     Optional<User> findByEmail(String email);
 
     List<User> findByRegistrationDate(LocalDateTime localDateTime);

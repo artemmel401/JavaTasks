@@ -27,6 +27,7 @@ boolean is_active
 
     MOVIE {
         int movie_id PK
+        int cinema_id FK
         varchar title
         text description
         int duration_minutes
@@ -61,6 +62,7 @@ boolean is_active
 
     USER ||--o{ BOOKING : makes
     CINEMA ||--o{ HALL : contains
+    CINEMA ||--o{MOVIE : contains
     HALL ||--o{ SEAT : has
     HALL ||--o{ SESSION : hosts
     MOVIE ||--o{ SESSION : shows

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Бронирование билета</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .movie-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 150px;
+        }
+
+        .info-value {
+            color: #212529;
+            text-align: right;
+        }
+
+        .price-highlight {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #27ae60;
+            text-align: center;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .booking-form {
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .seats-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #1976d2;
+        }
+
+        .total-amount {
+            background-color: #fff3e0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 1.1rem;
+            color: #f57c00;
+            margin-bottom: 5px;
+        }
+
+        .total-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e65100;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-book {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-book:hover {
+            background-color: #219653;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-cancel {
+            background-color: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background-color: #d5d5d5;
+        }
+
+        .notification {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .terms {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .info-row {
+                flex-direction: column;
+            }
+
+            .info-label {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎬 Бронирование билета</h1>
+        <p>Заполните форму для завершения бронирования</p>
+    </div>
+
+    <!-- Уведомления -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Информация о фильме и сеансе -->
+    <div class="movie-info">
+        <div class="info-row">
+            <span class="info-label">Фильм:</span>
+            <span class="info-value" th:text="${movie.title}">Название фильма</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Кинотеатр:</span>
+            <span class="info-value" th:text="${cinema.name}">Название кинотеатра</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Дата и время:</span>
+            <span class="info-value">
+                    <span th:text="${#temporals.format(movieSession.startTime, 'dd.MM.yyyy')}">15.01.2024</span>
+                    в
+                    <span th:text="${#temporals.format(movieSession.startTime, 'HH:mm')}">14:30</span>
+                </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Длительность:</span>
+            <span class="info-value">
+                    <span th:text="${#temporals.format(movieSession.startTime, 'HH:mm')}">14:30</span> -
+                    <span th:text="${#temporals.format(movieSession.endTime, 'HH:mm')}">16:30</span>
+                    (2 часа)
+                </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Зал:</span>
+            <span class="info-value" th:text="${movieSession.hall.name}">Зал #1</span>
+        </div>
+    </div>
+
+    <!-- Цена за билет -->
+    <div class="price-highlight">
+        Цена за 1 билет: <span th:text="${movieSession.price}">500</span> ₽
+    </div>
+
+    <!-- Форма бронирования -->
+    <div class="booking-form">
+        <form id="bookingForm">
+            <!-- Скрытые поля -->
+            <input type="hidden" name="session_id" th:value="${movieSession.id}">
+
+            <div class="form-group">
+                <label for="ticketCount">Количество билетов:</label>
+                <input type="number"
+                       id="ticketCount"
+                       name="ticket_count"
+                       min="1"
+                       max="10"
+                       value="1"
+                       required>
+                <div class="seats-info">
+                    ⓘ Максимально можно забронировать 10 билетов за один раз
+                </div>
+            </div>
+
+            <!-- Расчет общей суммы -->
+            <div class="total-amount">
+                <div class="total-label">Общая сумма к оплате:</div>
+                <div class="total-value" id="totalAmount">
+                    <span th:text="${movieSession.price}">500</span> ₽
+                </div>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="buttons">
+                <button type="button" class="btn btn-cancel" onclick="goBack()">
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-book" id="bookBtn">
+                    Забронировать и оплатить
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Индикатор загрузки -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Обработка запроса...</p>
+    </div>
+</div>
+
+<script>
+    // Элементы DOM
+    const bookingForm = document.getElementById('bookingForm');
+    const ticketCountInput = document.getElementById('ticketCount');
+    const totalAmountElement = document.getElementById('totalAmount');
+    const bookBtn = document.getElementById('bookBtn');
+    const loadingElement = document.getElementById('loading');
+    const notificationElement = document.getElementById('notification');
+
+    // Цена за билет (берем из Thymeleaf)
+    const ticketPrice = [[${movieSession.price}]];
+
+    // Функция для расчета общей суммы
+    function calculateTotal() {
+        const ticketCount = parseInt(ticketCountInput.value) || 1;
+        const total = ticketCount * ticketPrice;
+        totalAmountElement.textContent = total + ' ₽';
+    }
+
+    // Обновляем сумму при изменении количества билетов
+    ticketCountInput.addEventListener('input', calculateTotal);
+
+    // Инициализируем расчет
+    calculateTotal();
+
+    // Обработка отправки формы
+    bookingForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Показываем индикатор загрузки
+        loadingElement.style.display = 'block';
+        bookBtn.disabled = true;
+
+        // Собираем данные формы
+        const formData = {
+            session_id: [[${movieSession.id}]],
+            total_amount: parseInt(ticketCountInput.value) * ticketPrice
+        };
+
+        try {
+            // Отправляем POST запрос
+            const response = await fetch('/api/booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/hal+json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(formData)
+            });
+
+            // Проверяем ответ
+            if (response.ok) {
+                const booking = await response.json();
+
+                // Показываем успешное уведомление
+                showNotification('Бронирование успешно завершено! Перенаправляем в личный кабинет...', 'success');
+
+                // Через 2 секунды редиректим в кабинет
+                setTimeout(() => {
+                    window.location.href = '/cabinet';
+                }, 2000);
+
+            } else {
+                // Обработка ошибок
+                const error = await response.json();
+                showNotification('Ошибка: ' + (error.message || 'Не удалось выполнить бронирование'), 'error');
+            }
+
+        } catch (error) {
+            // Ошибка сети
+            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
+            console.error('Ошибка:', error);
+
+        } finally {
+            // Скрываем индикатор загрузки
+            loadingElement.style.display = 'none';
+            bookBtn.disabled = false;
+        }
+    });
+
+    // Функция для показа уведомлений
+    function showNotification(message, type) {
+        notificationElement.textContent = message;
+        notificationElement.className = 'notification ' + type;
+        notificationElement.style.display = 'block';
+
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            notificationElement.style.display = 'none';
+        }, 5000);
+    }
+
+    // Функция для кнопки "Назад"
+    function goBack() {
+        // Возвращаем на страницу сеансов
+        window.location.href =
+            '/cinemas/[[${cinema.id}]]/[[${movie.id}]]';
+    }
+
+    // Обработка клавиши Escape для отмены
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            goBack();
+        }
+    });
+</script>
+</body>
+</html>
