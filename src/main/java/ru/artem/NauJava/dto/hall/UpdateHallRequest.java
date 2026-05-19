@@ -6,22 +6,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
-public class CreateHallRequest {
-    @Schema(example = "name")
+@Setter
+@Schema(name = "UpdateHallRequest")
+public class UpdateHallRequest {
+
+    @Schema(example = "Зал 1")
     private String name;
 
-    @Schema(example = "50")
+    @Schema(example = "20")
     @JsonAlias("seats_per_row")
     private Integer seatsPerRow;
 
-    @Schema(example = "148")
+    @Schema(example = "15")
     @JsonAlias("total_rows")
     private Integer totalRows;
 
     @Schema(example = "1")
     @JsonProperty("cinema_id")
     @JsonAlias("cinemaId")
-    private Long cinema_id;
+    private Long cinemaId;
 }

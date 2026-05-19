@@ -6,27 +6,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
-public class CreateMovieRequest {
+@Setter
+@Schema(name = "UpdateMovieRequest")
+public class UpdateMovieRequest {
 
     @Schema(example = "Inception")
     private String title;
 
-    @Schema(example = "A thief who steals corporate secrets")
+    @Schema(example = "Описание фильма")
     private String description;
 
     @Schema(example = "148")
     @JsonAlias("duration_minutes")
     private Integer durationMinutes;
 
-    @Schema(example = "http://example.com/poster.jpg")
+    @Schema(example = "https://example.com/poster.jpg")
     @JsonAlias("poster_url")
     private String posterUrl;
 
     @Schema(example = "1")
     @JsonProperty("cinema_id")
     @JsonAlias("cinemaId")
-    private Long cinema_id;
-
+    private Long cinemaId;
 }

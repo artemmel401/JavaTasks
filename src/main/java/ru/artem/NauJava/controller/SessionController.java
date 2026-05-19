@@ -1,12 +1,16 @@
 package ru.artem.NauJava.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import ru.artem.NauJava.util.QueryParamUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.artem.NauJava.dto.session.CreateSessionRequest;
+import ru.artem.NauJava.dto.session.UpdateSessionRequest;
 import ru.artem.NauJava.entity.Booking;
 import ru.artem.NauJava.entity.Hall;
 import ru.artem.NauJava.entity.Movie;
@@ -18,9 +22,7 @@ import ru.artem.NauJava.repository.MovieRepository;
 import ru.artem.NauJava.repository.SessionRepository;
 import ru.artem.NauJava.services.session.SessionService;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -62,8 +64,37 @@ public class SessionController {
 
     @GetMapping("/session")
     @Tag(name = "session-entity-controller")
-    public ResponseEntity<List<Session>> getAllSessions() {
-        List<Session> sessions = (List<Session>) sessionRepository.findAll();
+    @Operation(operationId = "getAllSessions", summary = "getAllSessions")
+    public ResponseEntity<List<Session>> getAllSessions(
+            @Parameter(name = "movie_id", description = "ID фильма")
+            @RequestParam(value = "movie_id", required = false) Long movieIdSnake,
+            @Parameter(name = "movieId", description = "ID фильма (camelCase)")
+            @RequestParam(value = "movieId", required = false) Long movieIdCamel,
+            @Parameter(name = "hall_id", description = "ID зала")
+            @RequestParam(value = "hall_id", required = false) Long hallIdSnake,
+            @Parameter(name = "hallId", description = "ID зала (camelCase)")
+            @RequestParam(value = "hallId", required = false) Long hallIdCamel,
+            @Parameter(name = "cinema_id", description = "ID кинотеатра (через зал)")
+            @RequestParam(value = "cinema_id", required = false) Long cinemaIdSnake,
+            @Parameter(name = "cinemaId", description = "ID кинотеатра (camelCase)")
+            @RequestParam(value = "cinemaId", required = false) Long cinemaIdCamel
+    ) {
+        Long movieId = QueryParamUtils.resolveId(movieIdSnake, movieIdCamel);
+        Long hallId = QueryParamUtils.resolveId(hallIdSnake, hallIdCamel);
+        Long cinemaId = QueryParamUtils.resolveId(cinemaIdSnake, cinemaIdCamel);
+
+        List<Session> sessions;
+        if (movieId != null && hallId != null) {
+            sessions = sessionRepository.findByHallAndMovieId(hallId, movieId);
+        } else if (movieId != null) {
+            sessions = sessionRepository.findByMovieId(movieId);
+        } else if (hallId != null) {
+            sessions = sessionRepository.findByHallId(hallId);
+        } else if (cinemaId != null) {
+            sessions = sessionRepository.findByCinemaId(cinemaId);
+        } else {
+            sessions = (List<Session>) sessionRepository.findAll();
+        }
         return ResponseEntity.ok(sessions);
     }
     @GetMapping("/session/{id}")
@@ -98,40 +129,39 @@ public class SessionController {
 
     @PatchMapping("/admin/session/{id}")
     @Tag(name = "admin-entity-controller")
-    public ResponseEntity<Session> editSession(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+    @Operation(operationId = "updateSession", summary = "updateSession")
+    public ResponseEntity<Session> updateSession(
+            @PathVariable Long id,
+            @RequestBody UpdateSessionRequest request
+    ) {
         Optional<Session> optSession = sessionRepository.findById(id);
         if (optSession.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Session session = optSession.get();
 
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "startTime":
-                    LocalDateTime startDateTime = LocalDateTime.parse((String) value);
-                    session.setStartTime(startDateTime);
-                    break;
-                case "endTime":
-                    LocalDateTime endDateTime = LocalDateTime.parse((String) value);
-                    session.setEndTime(endDateTime);
-                    break;
-                case "price":
-                    if (value instanceof Integer) {
-                        session.setPrice((Integer) value);
-                    }
-                    break;
-                case "hallId":
-                    Hall hall = hallRepository.findById(((Number) value).longValue()).orElseThrow(() -> new RuntimeException(
-                            "Зал с ID " + value + " не найден"
-                    ));
-                    session.setHall(hall);
-                    break;
-                case "id":
-                    break;
-            }
-        });
+        if (request.getStartTime() != null) {
+            session.setStartTime(request.getStartTime());
+        }
+        if (request.getEndTime() != null) {
+            session.setEndTime(request.getEndTime());
+        }
+        if (request.getPrice() != null) {
+            session.setPrice(request.getPrice());
+        }
+        if (request.getHallId() != null) {
+            Hall hall = hallRepository.findById(request.getHallId()).orElseThrow(() -> new RuntimeException(
+                    "Зал с ID " + request.getHallId() + " не найден"
+            ));
+            session.setHall(hall);
+        }
+        if (request.getMovieId() != null) {
+            Movie movie = movieRepository.findById(request.getMovieId()).orElseThrow(() -> new RuntimeException(
+                    "Фильм с ID " + request.getMovieId() + " не найден"
+            ));
+            session.setMovie(movie);
+        }
 
-        Session updatedSession = sessionRepository.save(session);
-        return ResponseEntity.ok(updatedSession);
+        return ResponseEntity.ok(sessionRepository.save(session));
     }
 }

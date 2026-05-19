@@ -8,12 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.artem.NauJava.dto.cinema.CreateCinemaRequest;
+import ru.artem.NauJava.dto.cinema.UpdateCinemaRequest;
 import ru.artem.NauJava.entity.Cinema;
 import ru.artem.NauJava.repository.CinemaRepository;
 import ru.artem.NauJava.services.cinema.CinemaServiceImpl;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -61,10 +61,12 @@ public class CinemaController {
 
     @PatchMapping("/admin/cinema/{id}")
     @Tag(name = "admin-entity-controller")
+    @io.swagger.v3.oas.annotations.Operation(operationId = "updateCinema", summary = "updateCinema")
     @ApiResponse(responseCode = "404", description = "Кинотеатр не найден")
-    public ResponseEntity<Cinema> editCinema(
+    public ResponseEntity<Cinema> updateCinema(
             @Parameter(description = "ID кинотеатра", required = true, example = "1")
-            @PathVariable Long id, @RequestBody Map<String, Object> updates
+            @PathVariable Long id,
+            @RequestBody UpdateCinemaRequest request
     ) {
         Optional<Cinema> existingCinemaOpt = cinemaRepository.findById(id);
         if (existingCinemaOpt.isEmpty()) {
@@ -72,23 +74,16 @@ public class CinemaController {
         }
 
         Cinema cinema = existingCinemaOpt.get();
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "address":
-                    cinema.setAddress((String) value);
-                    break;
-                case "director":
-                    cinema.setDirector((String) value);
-                    break;
-                case "name":
-                    cinema.setName((String) value);
-                    break;
-                case "id":
-                    break;
-            }
-        });
+        if (request.getAddress() != null) {
+            cinema.setAddress(request.getAddress());
+        }
+        if (request.getDirector() != null) {
+            cinema.setDirector(request.getDirector());
+        }
+        if (request.getName() != null) {
+            cinema.setName(request.getName());
+        }
 
-        Cinema updatedCinema = cinemaRepository.save(cinema);
-        return ResponseEntity.ok(updatedCinema);
+        return ResponseEntity.ok(cinemaRepository.save(cinema));
     }
 }

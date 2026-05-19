@@ -8,31 +8,31 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Setter
 @Getter
-public class CreateSessionRequest {
+@Setter
+@Schema(name = "UpdateSessionRequest")
+public class UpdateSessionRequest {
 
-    @Schema(example = "2024-01-15T14:30:45.000")
+    @Schema(example = "2024-01-15T14:30:00")
     @JsonProperty("start_time")
     @JsonAlias("startTime")
-    private LocalDateTime start_time;
+    private LocalDateTime startTime;
 
-    @Schema(example = "2024-01-15T14:30:45.000")
+    @Schema(example = "2024-01-15T17:00:00")
     @JsonProperty("end_time")
     @JsonAlias("endTime")
-    private LocalDateTime end_time;
+    private LocalDateTime endTime;
 
-    @Schema(example = "148")
+    @Schema(example = "500")
     private Integer price;
 
     @Schema(example = "1")
     @JsonProperty("hall_id")
     @JsonAlias("hallId")
-    private Long hall_id;
+    private Long hallId;
 
     @Schema(example = "1")
     @JsonProperty("movie_id")
     @JsonAlias("movieId")
-    private Long movie_id;
-
+    private Long movieId;
 }

@@ -23,5 +23,8 @@ public interface SessionRepository extends CrudRepository<Session, Long> {
     @Query("SELECT s FROM Session s WHERE s.hall.id = :hallId")
     List<Session> findByHallId(@Param("hallId") Long hallId);
 
-
+    @RestResource(exported = false)
+    @Query("SELECT s FROM Session s WHERE s.hall.cinema.id = :cinemaId")
+    List<Session> findByCinemaId(@Param("cinemaId") Long cinemaId);
 }
+

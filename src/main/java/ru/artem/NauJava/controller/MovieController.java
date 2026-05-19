@@ -1,14 +1,17 @@
 package ru.artem.NauJava.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import ru.artem.NauJava.util.QueryParamUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.artem.NauJava.dto.movie.CreateMovieRequest;
+import ru.artem.NauJava.dto.movie.UpdateMovieRequest;
 import ru.artem.NauJava.entity.Cinema;
 import ru.artem.NauJava.entity.Movie;
 import ru.artem.NauJava.repository.CinemaRepository;
@@ -16,7 +19,6 @@ import ru.artem.NauJava.repository.MovieRepository;
 import ru.artem.NauJava.services.movie.MovieServiceImpl;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -51,8 +53,17 @@ public class MovieController {
 
     @GetMapping("/movie")
     @Tag(name = "movie-entity-controller")
-    public ResponseEntity<List<Movie>> getAllMovies() {
-        List<Movie> movies = (List<Movie>) movieRepository.findAll();
+    @Operation(operationId = "getAllMovies", summary = "getAllMovies")
+    public ResponseEntity<List<Movie>> getAllMovies(
+            @Parameter(name = "cinema_id", description = "ID кинотеатра — вернуть только фильмы этого кинотеатра")
+            @RequestParam(value = "cinema_id", required = false) Long cinemaIdSnake,
+            @Parameter(name = "cinemaId", description = "ID кинотеатра (camelCase)")
+            @RequestParam(value = "cinemaId", required = false) Long cinemaIdCamel
+    ) {
+        Long cinemaId = QueryParamUtils.resolveId(cinemaIdSnake, cinemaIdCamel);
+        List<Movie> movies = cinemaId != null
+                ? movieRepository.findByCinemaId(cinemaId)
+                : (List<Movie>) movieRepository.findAll();
         return ResponseEntity.ok(movies);
     }
     @GetMapping("/movie/{id}")
@@ -65,42 +76,39 @@ public class MovieController {
 
     @PatchMapping("/admin/movie/{id}")
     @Tag(name = "admin-entity-controller")
+    @Operation(operationId = "updateMovie", summary = "updateMovie")
     @ApiResponse(responseCode = "404", description = "Фильм не найден")
-    public ResponseEntity<Movie> partialUpdateMovie(
+    public ResponseEntity<Movie> updateMovie(
             @Parameter(description = "ID фильма", required = true, example = "1")
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updates) {
+            @RequestBody UpdateMovieRequest request) {
 
         Optional<Movie> existingMovieOpt = movieRepository.findById(id);
         if (existingMovieOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Movie existingMovie = existingMovieOpt.get();
+        Movie movie = existingMovieOpt.get();
+        if (request.getTitle() != null) {
+            movie.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            movie.setDescription(request.getDescription());
+        }
+        if (request.getDurationMinutes() != null) {
+            movie.setDurationMinutes(request.getDurationMinutes());
+        }
+        if (request.getPosterUrl() != null) {
+            movie.setPosterUrl(request.getPosterUrl());
+        }
+        if (request.getCinemaId() != null) {
+            Cinema cinema = cinemaRepository.findById(request.getCinemaId()).orElseThrow(() -> new RuntimeException(
+                    "Кинотеатр с ID " + request.getCinemaId() + " не найден"
+            ));
+            movie.setCinema(cinema);
+        }
 
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "title":
-                    existingMovie.setTitle((String) value);
-                    break;
-                case "description":
-                    existingMovie.setDescription((String) value);
-                    break;
-                case "durationMinutes":
-                    if (value instanceof Integer) {
-                        existingMovie.setDurationMinutes((Integer) value);
-                    }
-                    break;
-                case "posterUrl":
-                    existingMovie.setPosterUrl((String) value);
-                    break;
-                case "id":
-                    break;
-            }
-        });
-
-        Movie updatedMovie = movieRepository.save(existingMovie);
-        return ResponseEntity.ok(updatedMovie);
+        return ResponseEntity.ok(movieRepository.save(movie));
     }
 
     @DeleteMapping("/admin/movie/{id}")

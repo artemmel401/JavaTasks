@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.artem.NauJava.dto.booking.CreateBookingRequest;
+import ru.artem.NauJava.dto.booking.PayBookingResponse;
 import ru.artem.NauJava.entity.Booking;
 import ru.artem.NauJava.entity.Session;
 import ru.artem.NauJava.entity.User;
@@ -56,9 +57,16 @@ public class BookingController {
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @GetMapping("admin/booking/findByUser")
+    @GetMapping("/admin/booking/findByUser")
     @Tag(name = "admin-entity-controller")
-    public List<Booking> findBookingByUserId (@RequestParam Long userId) {
+    public List<Booking> findBookingByUserId(
+            @RequestParam(value = "user_id", required = false) Long userIdSnake,
+            @RequestParam(value = "userId", required = false) Long userIdCamel
+    ) {
+        Long userId = userIdSnake != null ? userIdSnake : userIdCamel;
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
         return bookingRepository.findBookingsByUserId(userId);
     }
     @GetMapping("/booking")
@@ -81,25 +89,30 @@ public class BookingController {
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> new RuntimeException(
                 "Бронирование " + id + " не найдено"
         ));
-        if (booking.getUser().getId().equals(user.getId()) && user.getRole().equals(Role.USER)) {
+        boolean isOwner = booking.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getRole().equals(Role.ADMIN);
+        if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(booking);
     }
     @PostMapping("/booking/{id}/pay")
     @Tag(name = "booking-entity-controller")
-    public ResponseEntity<?> payBooking(Principal principal, @PathVariable Long id) {
+    @io.swagger.v3.oas.annotations.Operation(operationId = "payBooking", summary = "payBooking")
+    public ResponseEntity<PayBookingResponse> payBooking(Principal principal, @PathVariable Long id) {
         try {
             bookingService.payBooking(id, principal.getName());
 
-            if (bookingService != null) {
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            PayBookingResponse response = new PayBookingResponse();
+            response.setSuccess(true);
+            response.setMessage("Payment processed successfully");
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing payment: " + e.getMessage());
+            PayBookingResponse response = new PayBookingResponse();
+            response.setSuccess(false);
+            response.setMessage("Error processing payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
