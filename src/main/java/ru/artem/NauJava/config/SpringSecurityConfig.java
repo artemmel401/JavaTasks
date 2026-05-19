@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -70,8 +71,8 @@ public class SpringSecurityConfig {
                                 "/login",
                                 "/registration",
                                 "/",
-                                "/cinemas/**",
-                                "/api/bookings",
+                                "/cinemas/*",
+                                "/cinemas/*/*",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
@@ -79,12 +80,24 @@ public class SpringSecurityConfig {
                                 "/webjars/**"
                         )
                         .permitAll()
-                        .requestMatchers("/cinemas/*/movies/*/sessions/*/booking", "/api/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/cinema/**",
+                                "/api/movie/**",
+                                "/api/session/**",
+                                "/api/hall/**"
+                        )
+                        .permitAll()
                         .requestMatchers(
                                 "/admin/**",
-                                "api/bookings/findByUser",
-                                "/monitoring",
-                                "api/admin/**").hasRole("ADMIN")
+                                "/api/admin/**",
+                                "/monitoring"
+                        )
+                        .hasRole("ADMIN")
+                        .requestMatchers(
+                                "/cinemas/*/movies/*/sessions/*/booking",
+                                "/api/**"
+                        )
+                        .hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
