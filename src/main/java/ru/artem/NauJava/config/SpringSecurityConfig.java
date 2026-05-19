@@ -54,15 +54,17 @@ public class SpringSecurityConfig {
                                 "/registration",
                                 "/",
                                 "/cinemas/**",
-                                "/api/bookings"
+                                "/api/bookings",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         )
                         .permitAll()
                         .requestMatchers("/cinemas/*/movies/*/sessions/*/booking", "/api/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
                                 "/admin/**",
-                                "/swagger-resources/**",
                                 "api/bookings/findByUser",
                                 "/monitoring",
                                 "api/admin/**").hasRole("ADMIN")
