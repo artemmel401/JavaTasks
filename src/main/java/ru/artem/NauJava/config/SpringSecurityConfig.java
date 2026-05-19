@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -50,6 +51,7 @@ public class SpringSecurityConfig {
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(
                                 "/api/auth/register",
+                                "/api/auth/login",
                                 "/login",
                                 "/registration",
                                 "/",
@@ -69,6 +71,16 @@ public class SpringSecurityConfig {
                                 "/monitoring",
                                 "api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                            } else {
+                                response.sendRedirect("/login");
+                            }
+                        }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(form -> form
                         .loginPage("/login")
